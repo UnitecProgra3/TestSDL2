@@ -1,12 +1,33 @@
 #include<SDL2/SDL.h>
 #include<SDL2/SDL_image.h>
+#include<SDL2/SDL_mixer.h>
 #include<iostream>
+
+using namespace std;
 
 SDL_Window* window;
 SDL_Renderer* renderer;
 SDL_Event Event;
-SDL_Texture *background,*character1, *character2;
-SDL_Rect rect_background,rect_character;
+SDL_Texture *background,*character1, *character2, *character_otro;
+SDL_Rect rect_background,rect_character, rect_character_otro;
+Mix_Music *musica = NULL;
+
+bool colision(SDL_Rect r1, SDL_Rect r2)
+{
+    if(r1.x + r1.w <= r2.x)//r1 esta muy a la i
+        return false;
+
+    if(r2.x + r2.w <= r1.x)//r1 esta muy a la der
+        return false;
+
+    if(r1.y + r1.h <= r2.y)//r1 esta muy a la i
+        return false;
+
+    if(r2.y + r2.h <= r1.y)//r1 esta muy a la der
+        return false;
+
+    return true;
+}
 
 int main( int argc, char* args[] )
 {
@@ -28,19 +49,39 @@ int main( int argc, char* args[] )
         return 30;
     }
 
+    //SDL mixer
+    if(Mix_OpenAudio(22050, AUDIO_S16, 2, 4096))
+    {
+        return 40;
+    }
+
+    musica = Mix_LoadMUS("musica.ogg");
+    Mix_PlayMusic(musica, 1);
+
     //Init textures
     int w=0,h=0;
     background = IMG_LoadTexture(renderer,"fondo.png");
     SDL_QueryTexture(background, NULL, NULL, &w, &h);
-    rect_background.x = 0; rect_background.y = 0; rect_background.w = w; rect_background.h = h;
+    rect_background.x = 0;
+    rect_background.y = 0;
+    rect_background.w = w;
+    rect_background.h = h;
 
     character1 = IMG_LoadTexture(renderer, "derecha1.png");
     character2 = IMG_LoadTexture(renderer, "derecha2.png");
+    character_otro = IMG_LoadTexture(renderer, "derecha1.png");
+
     SDL_QueryTexture(character1, NULL, NULL, &w, &h);
     rect_character.x = 0;
     rect_character.y = 0;
     rect_character.w = w;
     rect_character.h = h;
+
+    SDL_QueryTexture(character_otro, NULL, NULL, &w, &h);
+    rect_character_otro.x = 40;
+    rect_character_otro.y = 50;
+    rect_character_otro.w = w;
+    rect_character_otro.h = h;
 
     //Main Loop
     int cont = 0;
@@ -61,18 +102,26 @@ int main( int argc, char* args[] )
                 if(Event.key.keysym.sym == SDLK_w)
                 {
                     rect_character.y--;
+                    if(colision(rect_character,rect_character_otro))
+                        rect_character.y++;
                 }
                 if(Event.key.keysym.sym == SDLK_a)
                 {
                     rect_character.x--;
+                    if(colision(rect_character,rect_character_otro))
+                        rect_character.x++;
                 }
                 if(Event.key.keysym.sym == SDLK_s)
                 {
                     rect_character.y++;
+                    if(colision(rect_character,rect_character_otro))
+                        rect_character.y--;
                 }
                 if(Event.key.keysym.sym == SDLK_d)
                 {
                     rect_character.x++;
+                    if(colision(rect_character,rect_character_otro))
+                        rect_character.x--;
                 }
             }
         }
@@ -84,10 +133,14 @@ int main( int argc, char* args[] )
         else
             SDL_RenderCopy(renderer, character2, NULL, &rect_character);
 
+        SDL_RenderCopy(renderer, character_otro, NULL, &rect_character_otro);
+
         if(frame%200==0)
         {
             animacion_personaje++;
         }
+
+        cout<< colision(rect_character, rect_character_otro)<< endl;
 
         SDL_RenderPresent(renderer);
         frame++;
