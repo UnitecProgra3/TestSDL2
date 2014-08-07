@@ -2,6 +2,10 @@
 #include<SDL2/SDL_image.h>
 #include<SDL2/SDL_mixer.h>
 #include<iostream>
+#include<vector>
+#include "Enemigo.h"
+#include "EnemigoRojo.h"
+#include "EnemigoMorado.h"
 
 using namespace std;
 
@@ -37,7 +41,7 @@ int main( int argc, char* args[] )
         return 10;
     }
     //Creates a SDL Window
-    if((window = SDL_CreateWindow("Este es mi mensaje", 100, 100, 500/*WIDTH*/, 250/*HEIGHT*/, SDL_WINDOW_RESIZABLE | SDL_RENDERER_PRESENTVSYNC)) == NULL)
+    if((window = SDL_CreateWindow("Este es mi mensaje", 100, 100, 800/*WIDTH*/, 600/*HEIGHT*/, SDL_WINDOW_RESIZABLE | SDL_RENDERER_PRESENTVSYNC)) == NULL)
     {
         return 20;
     }
@@ -89,6 +93,14 @@ int main( int argc, char* args[] )
 
     int frame = 0;
     int animacion_personaje = 0;
+
+    int frame_anterior = 0;
+
+    vector<Enemigo*>enemigos;
+    enemigos.push_back(new EnemigoRojo(renderer));
+    enemigos.push_back(new EnemigoMorado(renderer));
+    enemigos.push_back(new Enemigo(renderer));
+
     while(true)
     {
         while(SDL_PollEvent(&Event))
@@ -97,34 +109,40 @@ int main( int argc, char* args[] )
             {
                 return 0;
             }
-            if(Event.type == SDL_KEYDOWN)
-            {
-                if(Event.key.keysym.sym == SDLK_w)
-                {
-                    rect_character.y--;
-                    if(colision(rect_character,rect_character_otro))
-                        rect_character.y++;
-                }
-                if(Event.key.keysym.sym == SDLK_a)
-                {
-                    rect_character.x--;
-                    if(colision(rect_character,rect_character_otro))
-                        rect_character.x++;
-                }
-                if(Event.key.keysym.sym == SDLK_s)
-                {
-                    rect_character.y++;
-                    if(colision(rect_character,rect_character_otro))
-                        rect_character.y--;
-                }
-                if(Event.key.keysym.sym == SDLK_d)
-                {
-                    rect_character.x++;
-                    if(colision(rect_character,rect_character_otro))
-                        rect_character.x--;
-                }
-            }
         }
+
+        const Uint8* estado_teclas = SDL_GetKeyboardState( NULL );
+
+        if(estado_teclas[SDL_SCANCODE_W])
+        {
+            rect_character.y--;
+            if(colision(rect_character,rect_character_otro))
+                rect_character.y++;
+        }
+
+        if(estado_teclas[SDL_SCANCODE_A])
+        {
+            if(rect_character.x>0)
+                rect_character.x--;
+            if(colision(rect_character,rect_character_otro))
+                rect_character.x++;
+        }
+
+        if(estado_teclas[SDL_SCANCODE_S])
+        {
+            rect_character.y++;
+            if(colision(rect_character,rect_character_otro))
+                rect_character.y--;
+        }
+
+        if(estado_teclas[SDL_SCANCODE_D])
+        {
+            if(rect_character.x<800-w)
+                rect_character.x++;
+            if(colision(rect_character,rect_character_otro))
+                rect_character.x--;
+        }
+
 
         SDL_RenderCopy(renderer, background, NULL, &rect_background);
 
@@ -140,10 +158,20 @@ int main( int argc, char* args[] )
             animacion_personaje++;
         }
 
-        cout<< colision(rect_character, rect_character_otro)<< endl;
+        for(int i=0;i<enemigos.size();i++)
+        {
+            enemigos[i]->dibujar();
+            enemigos[i]->logica();
+        }
 
         SDL_RenderPresent(renderer);
         frame++;
+
+        int frame_actual = SDL_GetTicks() - frame_anterior;
+        frame_anterior = SDL_GetTicks();
+        if(17-frame_actual>0)
+            SDL_Delay( 17-frame_actual );
+
     }
 
 	return 0;
